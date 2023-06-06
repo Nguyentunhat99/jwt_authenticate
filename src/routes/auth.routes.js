@@ -23,6 +23,7 @@ const initAuthRoute = (app) => {
     ,authController.handleRegister);
 
     router.post('/login',authController.handleLogin);
+
     // router.post("/refreshtoken", authController.refreshToken);
     
     return app.use('/api/v1/auth', router)

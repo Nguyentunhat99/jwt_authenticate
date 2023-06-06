@@ -22,13 +22,11 @@ const initUserRoute = (app) => {
     );
 
     router.get(
-        "/test/mod",[verifyToken,isModerator],userController.moderatorBoard
+        "/test/moderator",[verifyToken,isModerator],userController.moderatorBoard
     );
 
     router.get(
-        "/test/admin",
-        [verifyToken,isAdmin],
-        userController.adminBoard
+        "/test/admin",[verifyToken,isAdmin],userController.adminBoard
     );
     
     return app.use('/api/v1/', router)

@@ -21,9 +21,7 @@ let verifyToken = async (req, res, next) => {
 
   jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
     if (err) {
-      return res.status(401).send({
-        message: "Unauthorized!"
-      });
+      return catchError(err, res);
     }
     req.userId = decoded.id;
     next();
@@ -31,81 +29,91 @@ let verifyToken = async (req, res, next) => {
 }
 
 let isAdmin = async (req, res, next) => {
-    console.log(req.body);
-    let user = await db.Users.findOne({
+    let user = await db.users.findOne({
         where: {
             email: req.body.email
         },
         attributes: {
-            exclude: ['roleId','createdAt','updatedAt'],
+            exclude: ['password','createdAt','updatedAt'],
         },
-        include: [
-            {model: db.Roles, as: 'role', attributes: ['id','name']}
-        ],
-        raw: true,
-        nest: true
+    });
+    let userRoles = await db.User_Roles.findAll({
+      where: {
+        userId: user.id,
+      },
+      attributes: {
+        exclude: ["userId",'createdAt','updatedAt'],
+      },
     })
-    if(user.role.name === 'admin') {
+    for(let i=0; i<userRoles.length; i++) {
+      if (userRoles[i].roleId === 1) {
         next();
-    }else{
-      return res.status(403).json({
-        message: "Require Admin Role!"
-      });
-      
-    }
+        return;
+      }
+     }
+    return res.status(403).json({
+      message: "Require User Role!"
+    });
 }
 
 let isModerator = async (req, res, next) => {
-    console.log(req.body);
-    let user = await db.Users.findOne({
+    let user = await db.users.findOne({
         where: {
             email: req.body.email
         },
         attributes: {
-            exclude: ['roleId','createdAt','updatedAt'],
+            exclude: ['password','createdAt','updatedAt'],
         },
-        include: [
-            {model: db.Roles, as: 'role', attributes: ['id','name']}
-        ],
-        raw: true,
-        nest: true
+    });
+    let userRoles = await db.User_Roles.findAll({
+        where: {
+            userId: user.id,
+        },
+        attributes: {
+            exclude: ["userId",'createdAt','updatedAt'],
+        },
     })
-    if(user.role.name === 'moderator') {
+
+    for(let i=0; i<userRoles.length; i++) {
+      if (userRoles[i].roleId === 2) {
         next();
-    }else{
-      return res.status(403).json({
-        message: "Require moderator Role!"
-      });
-      
-    }
+        return;
+      }
+     }
+    return res.status(403).json({
+      message: "Require User Role!"
+    });
 }
 
 let isUser = async (req, res, next) => {
-    console.log(req.body);
-    let user = await db.Users.findOne({
+    let user = await db.users.findOne({
         where: {
             email: req.body.email
         },
         attributes: {
-            exclude: ['roleId','createdAt','updatedAt'],
+            exclude: ['password','createdAt','updatedAt'],
         },
-        include: [
-            {model: db.Roles, as: 'role', attributes: ['id','name']}
-        ],
-        raw: true,
-        nest: true
-    })
-    console.log(user);
-    if(user.role.name === 'user') {
-        next();
-    }else{
-      return res.status(403).json({
-        message: "Require User Role!"
-      });
-      
-    }
-}
+    });
+    let userRoles = await db.User_Roles.findAll({
+        where: {
+            userId: user.id,
+        },
+        attributes: {
+            exclude: ["userId",'createdAt','updatedAt'],
+        },
+      })
 
+    for(let i=0; i<userRoles.length; i++) {
+      if (userRoles[i].roleId === 3) {
+        next();
+        return;
+      }
+     }
+    return res.status(403).json({
+      message: "Require User Role!"
+    });
+    
+}
 
 module.exports = {
     verifyToken,

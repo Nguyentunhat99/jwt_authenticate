@@ -1,12 +1,11 @@
 import authService from '../services/auth.services'; 
 
 let handleRegister = async (req, res) => {
-    let message = await authService.createAcc(req.body)
+    let message = await authService.createAccount(req.body)
     return res.status(200).json(message)
 };
 
 let handleLogin = async (req, res) => {
-    console.log(req.body);
     let email = req.body.email;
     let password = req.body.password;
     if (!email || !password) {
@@ -19,7 +18,7 @@ let handleLogin = async (req, res) => {
 
     return res.status(200).json({
         message: userData.message,
-        user: userData.user ? userData.user : {},
+        user: userData.user ? userData.user : {}, 
         accessToken: userData.accessToken,
     })
 }

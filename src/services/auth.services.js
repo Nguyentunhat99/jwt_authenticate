@@ -5,61 +5,61 @@ import jwt  from 'jsonwebtoken';
 // import config from '../config/auth.config'
 
 const salt = bcrypt.genSaltSync(10);
+const Op = db.Sequelize.Op;
 require('dotenv').config()
+const { v4: uuidv4 } = require("uuid");
 
 
-let createAcc = (data) => {
-    console.log('data:',data);
+
+let createAccount = (data) => {
     return new Promise(async(resolve, reject) => {
         try {
             let hashPasswordFromBcrypt = await hashUserPassword(data.password.trim());
-            await db.Users.create({
+            await db.users.create({
                 username: data.username.trim(), 
                 email: data.email.trim(), 
-                password: hashPasswordFromBcrypt,
-                roleId: data.roleId
+                password: hashPasswordFromBcrypt                
+            })
+            resolve({
+                status: "Success",
+                message: 'Added user successfully!'
+            }); 
+            let userFind = await db.users.findOne({
+                where: {
+                    email: data.email
+                }
+            })
+            if(data.role){
+                let roles = await db.roles.findAll({
+                    where: {
+                        name: {
+                          [Op.or]: data.role
+                        }
+                    },
+                    attributes: {
+                        exclude: ["name","createdAt", "updatedAt"],
+                    },
                 })
-                resolve({
-                    status: "Success",
-                    message: 'Added user successfully!'
-                }); 
-            
+                roles.map(role => {
+                    role.userId = userFind.id
+                    role.roleId = role.id
+                    delete role.id
+                    return role
+                })
+                let userRoles = roles;
+                await db.User_Roles.bulkCreate(userRoles)
+            }else{
+                await db.User_Roles.create({
+                    userId: userFind.id,
+                    roleId: 3
+                })
+            }
         } catch (error) {
             reject(error)
         }
     })
 }
 
-let checkUserEmail = (email) => {
-    return new Promise(async(resolve, reject) => {
-        try {
-            let user = await db.Users.findOne({
-                where:{
-                    email: email,
-                }
-            })
-            if (user) {
-                resolve(true)
-            } else {
-                resolve(false)
-            }
-        } catch (error) {
-            reject(error);
-        }
-    })
-}
-
-
-let hashUserPassword = (password) => {
-    return new Promise(async(resolve, reject) => {
-        try {
-            var hashPassword = await bcrypt.hashSync(password, salt);
-            resolve(hashPassword)
-        } catch (error) {
-            reject(error);
-        }
-    })
-}
 
 let handleAuthLogin = (email, password) => {
     return new Promise(async(resolve, reject) => {
@@ -67,26 +67,45 @@ let handleAuthLogin = (email, password) => {
             let userData = {};
             let isExist = await checkUserEmail(email);
             if (isExist) {
-                let user = await db.Users.findOne({
+                let user = await db.users.findOne({
                     where: {
                         email: email,
                     },
                     attributes: {
-                        exclude: ['roleId','createdAt','updatedAt'],
+                        exclude: ['createdAt','updatedAt'],
                     },
-                    include: [
-                        {model: db.Roles, as: 'role', attributes: ['id','name']}
-                    ],
-                    raw: true,
-                    nest: true
                 })
+
                 if (user) {
+                    let userRoles = await db.User_Roles.findAll({
+                        where: {
+                            userId: user.id
+                        },
+                        attributes: {
+                            exclude: ["userId",'createdAt','updatedAt'],
+                        },
+                    })
+                    
+                    let roles = [];
+                    for(let i=0;i<userRoles.length;i++) {
+                        if(userRoles[i].roleId === 1){
+                            roles.push("role_admin");
+                        }
+                        if(userRoles[i].roleId === 2){
+                            roles.push("role_moderator");
+                        }
+                        if(userRoles[i].roleId === 3){
+                            roles.push("role_user");
+                        }                                                
+                    }
+                    console.log(roles);
                     let token = jwt.sign({id:user.id}, process.env.JWT_SECRET_KEY, {
-                        expiresIn: 120
-                    })   
+                        expiresIn: 86400
+                    })                       
                     let check = bcrypt.compareSync(password, user.password);//kiem tra password
                     if (check){
                         userData.message = 'Ok';
+                        user.roles = roles
                         delete user.password;
                         userData.user = user;
                         userData.accessToken = token
@@ -109,8 +128,36 @@ let handleAuthLogin = (email, password) => {
  
 };
 
+let checkUserEmail = (email) => {
+    return new Promise(async(resolve, reject) => {
+        try {
+            let user = await db.users.findOne({
+                where:{
+                    email: email,
+                }
+            })
+            if (user) {
+                resolve(true)
+            } else {
+                resolve(false)
+            }
+        } catch (error) {
+            reject(error);
+        }
+    })
+}
 
+let hashUserPassword = (password) => {
+    return new Promise(async(resolve, reject) => {
+        try {
+            var hashPassword = await bcrypt.hashSync(password, salt);
+            resolve(hashPassword)
+        } catch (error) {
+            reject(error);
+        }
+    })
+}
 module.exports = {
-    createAcc,
+    createAccount,
     handleAuthLogin
 }

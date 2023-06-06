@@ -9,7 +9,7 @@ let checkEmail = (req, res, next) => {
     return new Promise(async(resolve, reject) => {
         try {
             if(!email) return res.status(400).json({ message: "Invalid email"})
-            let user = await db.Users.findOne({
+            let user = await db.users.findOne({
                 where:{
                     email: email,
                 }
