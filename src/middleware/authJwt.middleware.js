@@ -31,7 +31,7 @@ let verifyToken = async (req, res, next) => {
 let isAdmin = async (req, res, next) => {
     let user = await db.users.findOne({
         where: {
-            email: req.body.email
+            id: req.userId
         },
         attributes: {
             exclude: ['password','createdAt','updatedAt'],
@@ -59,7 +59,7 @@ let isAdmin = async (req, res, next) => {
 let isModerator = async (req, res, next) => {
     let user = await db.users.findOne({
         where: {
-            email: req.body.email
+            id: req.userId
         },
         attributes: {
             exclude: ['password','createdAt','updatedAt'],
@@ -88,7 +88,7 @@ let isModerator = async (req, res, next) => {
 let isUser = async (req, res, next) => {
     let user = await db.users.findOne({
         where: {
-            email: req.body.email
+            id: req.userId
         },
         attributes: {
             exclude: ['password','createdAt','updatedAt'],
