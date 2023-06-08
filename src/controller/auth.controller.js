@@ -1,37 +1,55 @@
-import authService from '../services/auth.services'; 
+import authService from "../services/auth.services";
 
 let handleRegister = async (req, res) => {
-    let message = await authService.createAccount(req.body)
-    return res.status(200).json(message)
+  try {
+    let message = await authService.createAccount(req.body);
+    return res.status(200).json(message);
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error from server...",
+    });
+  }
 };
 
 let handleLogin = async (req, res) => {
+  try {
     let email = req.body.email;
     let password = req.body.password;
     if (!email || !password) {
-        return res.status(400).json({
-            message: 'missing inputs parameter !',
-        })
+      return res.status(400).json({
+        message: "missing inputs parameter !",
+      });
     }
     let userData = await authService.handleAuthLogin(email, password);
 
     return res.status(200).json({
-        message: userData.message,
-        user: userData.user ? userData.user : {}, 
-        accessToken: userData.accessToken,
-        refreshToken: userData.refreshToken
-    })
-}
+      message: userData.message,
+      user: userData.user ? userData.user : {},
+      accessToken: userData.accessToken,
+      refreshToken: userData.refreshToken,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error from server...",
+    });
+  }
+};
 
 let handlerefreshToken = async (req, res) => {
-    let dataToken = await authService.refreshToken(req.body)
+  try {
+    let dataToken = await authService.refreshToken(req.body);
     return res.status(200).json({
-        accessToken: dataToken.accessToken,
-        refreshToken: dataToken.refreshToken
-    })
+      accessToken: dataToken.accessToken,
+      refreshToken: dataToken.refreshToken,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error from server...",
+    });
+  }
 };
 module.exports = {
-    handleRegister,
-    handleLogin,
-    handlerefreshToken
-} 
+  handleRegister,
+  handleLogin,
+  handlerefreshToken,
+};

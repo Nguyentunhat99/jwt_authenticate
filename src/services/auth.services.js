@@ -74,7 +74,6 @@ let handleAuthLogin = (email, password) => {
               exclude: ["userId", "createdAt", "updatedAt"],
             },
           });
-          console.log("userRoles", userRoles);
 
           let roleId = [];
           userRoles.map((userRole) => {
@@ -128,7 +127,6 @@ let handleAuthLogin = (email, password) => {
         response.message = `Your email does not exist. Please re-enter!`;
       }
       resolve(response);
-      console.log(response);
     } catch (error) {
       reject(error);
     }
@@ -138,7 +136,6 @@ let refreshToken = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
       let dataToken = {};
-      console.log("check", response);
       let { refreshToken } = data;
       let refreshTokenCompare = response.refreshToken;
       let userId = response.user.id;
