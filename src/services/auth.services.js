@@ -20,7 +20,7 @@ let createAccount = (data) => {
         password: hashPasswordFromBcrypt,
       });
       resolve({
-        status: "Success",
+        status: "success",
         message: "Added user successfully!",
       });
       let userFind = await db.users.findOne({
@@ -109,21 +109,25 @@ let handleAuthLogin = (email, password) => {
 
           let check = bcrypt.compareSync(password, user.password);
           if (check) {
-            response.message = "Ok";
+            response.status = "success";
+            response.message = "Logged in successfully";
             user.roles = roles;
             delete user.password;
             response.user = user;
             (response.accessToken = token),
               (response.refreshToken = refreshToken);
           } else {
-            (response.accessToken = null),
-              (response.message = "Wrong password");
+            response.accessToken = null;
+            response.status = "error";
+            response.message = "Wrong password";
           }
         } else {
+          response.status = "error";
           response.message = `User does not exist`;
           resolve(response);
         }
       } else {
+        response.status = "error";
         response.message = `Your email does not exist. Please re-enter!`;
       }
       resolve(response);

@@ -1,3 +1,5 @@
+import userService from "../services/user.services";
+
 let allAccess = (req, res) => {
   return res.status(200).send("Public Content (^_^).");
 };
@@ -14,10 +16,21 @@ let moderatorBoard = (req, res) => {
   return res.status(200).send("Moderator Content (^_^).");
 };
 
+let getRoles = async (req, res) => {
+  try {
+    let data = await userService.getRolesService();
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(500).json({
+      message: "Error from server",
+    });
+  }
+};
 
 module.exports = {
-    allAccess,
-    userBoard,
-    adminBoard,
-    moderatorBoard
-} 
+  allAccess,
+  userBoard,
+  adminBoard,
+  moderatorBoard,
+  getRoles,
+};

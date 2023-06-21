@@ -4,7 +4,11 @@ let checkEmail = (req, res, next) => {
   let email = req.body.email;
   return new Promise(async (resolve, reject) => {
     try {
-      if (!email) return res.status(400).json({ message: "Invalid email" });
+      if (!email)
+        return res.status(200).json({
+          status: "error",
+          message: "Invalid email",
+        });
       let user = await db.users.findOne({
         where: {
           email: email,
@@ -12,8 +16,8 @@ let checkEmail = (req, res, next) => {
       });
       if (user) {
         resolve(
-          res.status(400).json({
-            status: "Error",
+          res.status(200).json({
+            status: "error",
             message: "Failed! Email is already in use!",
           })
         );
@@ -31,14 +35,15 @@ let checkPassword = async (req, res, next) => {
   let password = req.body.password;
   let repassword = req.body.repassword;
   if (password.length < 8) {
-    return res.status(400).json({
+    return res.status(200).json({
+      status: "error",
       message: "Password needs to be at least 8 characters long",
     });
   } else if (password != repassword) {
-    res.status(400).json({
+    return res.status(200).json({
+      status: "error",
       message: "Re-entered password is incorrect !",
     });
-    return;
   } else {
     next();
   }
@@ -54,17 +59,19 @@ let checkRolesExisted = async (req, res, next) => {
   rolesDB.map((roles) => {
     arrRoles.push(roles.name);
   });
-  if (roles) {
+  if (roles && roles.length > 0) {
     for (let i = 0; i < roles.length; i++) {
       if (!arrRoles.includes(roles[i].toLowerCase())) {
-        return res.status(400).json({
+        return res.status(200).json({
+          status: "error",
           message: "Failed! Role does not exist = " + req.body.roles[i],
         });
       }
     }
     next();
   } else {
-    return res.status(400).json({
+    return res.status(200).json({
+      status: "error",
       message: "Invalid roles ",
     });
   }

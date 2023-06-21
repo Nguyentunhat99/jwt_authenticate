@@ -16,15 +16,17 @@ let handleLogin = async (req, res) => {
     let email = req.body.email;
     let password = req.body.password;
     if (!email || !password) {
-      return res.status(400).json({
+      return res.status(200).json({
+        status: "error",
         message: "missing inputs parameter !",
       });
     }
     let userData = await authService.handleAuthLogin(email, password);
 
     return res.status(200).json({
+      status: userData.status,
       message: userData.message,
-      user: userData.user ? userData.user : {},
+      userInfo: userData.user ? userData.user : {},
       accessToken: userData.accessToken,
       refreshToken: userData.refreshToken,
     });
