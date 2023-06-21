@@ -18,7 +18,7 @@ let handleLogin = async (req, res) => {
     if (!email || !password) {
       return res.status(200).json({
         status: "error",
-        message: "missing inputs parameter !",
+        message: "Missing inputs parameter !",
       });
     }
     let userData = await authService.handleAuthLogin(email, password);
@@ -41,6 +41,8 @@ let handlerefreshToken = async (req, res) => {
   try {
     let dataToken = await authService.refreshToken(req.body);
     return res.status(200).json({
+      status: dataToken.status,
+      message: dataToken.message,
       accessToken: dataToken.accessToken,
       refreshToken: dataToken.refreshToken,
     });

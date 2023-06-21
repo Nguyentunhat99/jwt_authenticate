@@ -6,9 +6,9 @@ import config from "../config/auth.config";
 
 const salt = bcrypt.genSaltSync(10);
 const Op = db.Sequelize.Op;
-require("dotenv").config();
+const { v4: uuidv4 } = require("uuid");
 
-let response = {};
+require("dotenv").config();
 
 let createAccount = (data) => {
   return new Promise(async (resolve, reject) => {
@@ -55,6 +55,8 @@ let createAccount = (data) => {
 let handleAuthLogin = (email, password) => {
   return new Promise(async (resolve, reject) => {
     try {
+      let response = {};
+
       let isExist = await checkUserEmail(email);
       if (isExist) {
         let user = await db.users.findOne({
@@ -99,13 +101,16 @@ let handleAuthLogin = (email, password) => {
           let token = jwt.sign({ id: user.id }, process.env.JWT_SECRET_KEY, {
             expiresIn: config.jwtExpiration,
           });
-          let refreshToken = jwt.sign(
-            { id: user.id },
-            process.env.JWT_SECRET_REFRESH_KEY,
-            {
-              expiresIn: config.jwtRefreshExpiration,
-            }
+          let expiredAt = new Date();
+          expiredAt.setSeconds(
+            expiredAt.getSeconds() + config.jwtRefreshExpiration
           );
+          let refreshToken = uuidv4();
+          await db.refresh_tokens.create({
+            token: refreshToken,
+            user_Id: user.id,
+            expiryDate: expiredAt.getTime(),
+          });
 
           let check = bcrypt.compareSync(password, user.password);
           if (check) {
@@ -114,8 +119,8 @@ let handleAuthLogin = (email, password) => {
             user.roles = roles;
             delete user.password;
             response.user = user;
-            (response.accessToken = token),
-              (response.refreshToken = refreshToken);
+            response.accessToken = token;
+            response.refreshToken = refreshToken;
           } else {
             response.accessToken = null;
             response.status = "error";
@@ -132,6 +137,7 @@ let handleAuthLogin = (email, password) => {
       }
       resolve(response);
     } catch (error) {
+      console.log(error);
       reject(error);
     }
   });
@@ -139,26 +145,64 @@ let handleAuthLogin = (email, password) => {
 let refreshToken = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
-      let dataToken = {};
-      let { refreshToken } = data;
-      let refreshTokenCompare = response.refreshToken;
-      let userId = response.user.id;
-      if (refreshToken && refreshToken === refreshTokenCompare) {
-        let token = jwt.sign({ id: userId }, process.env.JWT_SECRET_KEY, {
-          expiresIn: config.jwtExpiration,
+      let { refreshToken } = data; //req.body
+      if (refreshToken === null) {
+        resolve({
+          status: "error",
+          message: "Refresh Token is required!",
         });
-
-        (dataToken.accessToken = token),
-          (dataToken.refreshToken = refreshToken);
-      } else {
-        dataToken.message = `Invalid request`;
       }
-      resolve(dataToken);
+
+      let refreshTokenDB = await db.refresh_tokens.findOne({
+        where: {
+          token: refreshToken,
+        },
+        attributes: {
+          exclude: ["createdAt", "updatedAt"],
+        },
+      });
+      console.log(refreshTokenDB);
+
+      if (!refreshTokenDB) {
+        console.log("aaaaaaaaaaaaaaaaaaaa");
+        resolve({
+          status: "error",
+          message:
+            "Refresh token was expired. Please make a new signin request",
+        });
+      }
+      if (refreshTokenDB.expiryDate.getTime() < new Date().getTime()) {
+        console.log("bbbbbbbbbbbbbbbbbb");
+
+        await db.refresh_tokens.destroy({
+          where: {
+            id: refreshTokenDB.id,
+          },
+        });
+        resolve({
+          status: "error",
+          message: "Refresh token is not in database!",
+        });
+      }
+
+      let newAccessToken = jwt.sign(
+        { id: refreshTokenDB.user_Id },
+        process.env.JWT_SECRET_KEY,
+        {
+          expiresIn: config.jwtExpiration,
+        }
+      );
+      resolve({
+        status: "success",
+        accessToken: newAccessToken,
+        refreshToken: refreshToken,
+      });
     } catch (error) {
       reject(error);
     }
   });
 };
+
 let checkUserEmail = (email) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -173,6 +217,7 @@ let checkUserEmail = (email) => {
         resolve(false);
       }
     } catch (error) {
+      console.log(error);
       reject(error);
     }
   });
