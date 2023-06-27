@@ -22,6 +22,7 @@ let createAccount = (data) => {
       resolve({
         status: "success",
         message: "Added user successfully!",
+        email: data.email.trim(),
       });
       let userFind = await db.users.findOne({
         where: {
@@ -164,16 +165,12 @@ let refreshToken = (data) => {
       console.log(refreshTokenDB);
 
       if (!refreshTokenDB) {
-        console.log("aaaaaaaaaaaaaaaaaaaa");
         resolve({
           status: "error",
-          message:
-            "Refresh token was expired. Please make a new signin request",
+          message: "Refresh token is not in database!",
         });
       }
       if (refreshTokenDB.expiryDate.getTime() < new Date().getTime()) {
-        console.log("bbbbbbbbbbbbbbbbbb");
-
         await db.refresh_tokens.destroy({
           where: {
             id: refreshTokenDB.id,
@@ -181,7 +178,8 @@ let refreshToken = (data) => {
         });
         resolve({
           status: "error",
-          message: "Refresh token is not in database!",
+          message:
+            "Refresh token was expired. Please make a new signin request",
         });
       }
 

@@ -1,34 +1,25 @@
 import db, { sequelize } from "../models/index";
 
-let checkEmail = (req, res, next) => {
+let checkEmail = async (req, res, next) => {
   let email = req.body.email;
-  return new Promise(async (resolve, reject) => {
-    try {
-      if (!email)
-        return res.status(200).json({
-          status: "error",
-          message: "Invalid email",
-        });
-      let user = await db.users.findOne({
-        where: {
-          email: email,
-        },
-      });
-      if (user) {
-        resolve(
-          res.status(200).json({
-            status: "error",
-            message: "Failed! Email is already in use!",
-          })
-        );
-        return;
-      } else {
-        next();
-      }
-    } catch (error) {
-      reject(error);
-    }
+  if (!email)
+    return res.status(200).json({
+      status: "error",
+      message: "Invalid email",
+    });
+  let user = await db.users.findOne({
+    where: {
+      email: email,
+    },
   });
+  if (user) {
+    return res.status(200).json({
+      status: "error",
+      message: "Failed! Email is already in use!",
+    });
+  } else {
+    next();
+  }
 };
 
 let checkPassword = async (req, res, next) => {

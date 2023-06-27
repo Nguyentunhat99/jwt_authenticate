@@ -5,11 +5,15 @@ import db, { sequelize } from "../models/index";
 let { TokenExpiredError } = jwt;
 let catchError = (err, res) => {
   if (err instanceof TokenExpiredError) {
-    return res
-      .status(401)
-      .send({ message: "Unauthorized! Access Token was expired!" });
+    return res.status(200).json({
+      status: "error",
+      message: "Unauthorized! Access Token was expired!",
+    });
   }
-  return res.sendStatus(401).send({ message: "Unauthorized!" });
+  return res.sendStatus(200).json({
+    status: "error",
+    message: "Unauthorized!",
+  });
 };
 
 let verifyToken = async (req, res, next) => {
@@ -53,8 +57,9 @@ let isAdmin = async (req, res, next) => {
       return;
     }
   }
-  return res.status(403).json({
-    message: "Require User Role!",
+  return res.status(200).json({
+    status: "error",
+    message: "Require Admin Role!",
   });
 };
 
@@ -82,7 +87,8 @@ let isModerator = async (req, res, next) => {
       return;
     }
   }
-  return res.status(403).json({
+  return res.status(200).json({
+    status: "error",
     message: "Require User Role!",
   });
 };
@@ -111,7 +117,8 @@ let isUser = async (req, res, next) => {
       return;
     }
   }
-  return res.status(403).json({
+  return res.status(200).json({
+    status: "error",
     message: "Require User Role!",
   });
 };
