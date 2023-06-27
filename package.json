@@ -1,7 +1,7 @@
 {
-  "name": "nodejs_jwt",
+  "name": "jwt_authenticate",
   "version": "1.0.0",
-  "description": "nodejs_jwt",
+  "description": "jwt_authenticate",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
